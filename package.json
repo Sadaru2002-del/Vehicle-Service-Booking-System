@@ -1,0 +1,23 @@
+{
+  "name": "vehicle-service-booking-system",
+  "version": "1.0.0",
+  "description": "FUCHSIUS Vehicle Service Booking System (MERN Stack)",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "backend": "npm --prefix backend run dev",
+    "frontend": "npm --prefix frontend run dev",
+    "start": "node backend/server.js",
+    "build:frontend": "npm --prefix frontend run build"
+  },
+  "keywords": [
+    "mern",
+    "vehicle-service",
+    "react",
+    "node",
+    "express",
+    "mongodb"
+  ],
+  "author": "Internship Project",
+  "license": "ISC"
+}
+
