@@ -209,3 +209,4 @@ Open **http://localhost:5173** in your web browser.
 
 ## 📄 License
 Developed for academic/internship evaluation.
+

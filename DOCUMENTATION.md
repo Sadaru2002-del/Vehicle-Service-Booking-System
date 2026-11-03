@@ -296,3 +296,4 @@ Traditional automotive service centers rely on physical logbooks, telephone book
 
 ## 9. Conclusion
 The **FUCHSIUS Vehicle Service Booking System** fully satisfies all functional, architectural, and technical requirements set forth in the internship documentation. Both customer and administrator modules are completed, integrated, tested, and ready for deployment.
+
