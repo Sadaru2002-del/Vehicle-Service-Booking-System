@@ -14,12 +14,14 @@ import {
   RefreshCw, 
   Check, 
   X, 
-  TrendingUp,
-  Car,
-  User,
-  Phone,
-  FolderKanban,
-  AlertTriangle
+  TrendingUp, 
+  Car, 
+  User, 
+  Phone, 
+  FolderKanban, 
+  AlertTriangle,
+  BarChart3,
+  Download
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -31,7 +33,8 @@ const AdminDashboard = () => {
     approved: 0,
     completed: 0,
     rejected: 0,
-    today: 0
+    today: 0,
+    dailyTrends: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +48,7 @@ const AdminDashboard = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   // Fetch metrics & bookings
-  const fetchData = async () => {
+  const fetchData = async (overrideStatus, overrideDate, overrideSearch) => {
     setLoading(true);
     try {
       // 1. Fetch metrics
@@ -54,11 +57,15 @@ const AdminDashboard = () => {
         setMetrics(metricsRes.data.metrics);
       }
 
-      // 2. Fetch bookings with current filters
+      // 2. Fetch bookings with current or override filters
+      const curStatus = overrideStatus !== undefined ? overrideStatus : statusFilter;
+      const curDate = overrideDate !== undefined ? overrideDate : dateFilter;
+      const curSearch = overrideSearch !== undefined ? overrideSearch : searchQuery;
+
       let queryParams = [];
-      if (statusFilter && statusFilter !== 'All') queryParams.push(`status=${encodeURIComponent(statusFilter)}`);
-      if (dateFilter) queryParams.push(`date=${encodeURIComponent(dateFilter)}`);
-      if (searchQuery.trim()) queryParams.push(`search=${encodeURIComponent(searchQuery.trim())}`);
+      if (curStatus && curStatus !== 'All') queryParams.push(`status=${encodeURIComponent(curStatus)}`);
+      if (curDate) queryParams.push(`date=${encodeURIComponent(curDate)}`);
+      if (curSearch && curSearch.trim()) queryParams.push(`search=${encodeURIComponent(curSearch.trim())}`);
 
       const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
       const bookingsRes = await api.get(`/bookings${queryString}`);
@@ -87,6 +94,39 @@ const AdminDashboard = () => {
     setStatusFilter('All');
     setDateFilter('');
     setSearchQuery('');
+    fetchData('All', '', '');
+  };
+
+  // Export current table view to CSV
+  const exportToCSV = () => {
+    if (bookings.length === 0) {
+      toast.error('No bookings to export');
+      return;
+    }
+
+    const headers = ['Booking ID', 'Customer Name', 'Phone', 'Vehicle Number', 'Service Type', 'Price (LKR)', 'Date', 'Time Slot', 'Status', 'Notes'];
+    const rows = bookings.map(b => [
+      `"${b._id}"`,
+      `"${b.customerName}"`,
+      `"${b.phone}"`,
+      `"${b.vehicleNumber}"`,
+      `"${b.serviceType}"`,
+      `"${b.priceEstimate || 'N/A'}"`,
+      `"${b.date}"`,
+      `"${b.time}"`,
+      `"${b.status}"`,
+      `"${(b.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `fuchsius_bookings_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Bookings exported to CSV!');
   };
 
   // Update Status handler
@@ -176,15 +216,23 @@ const AdminDashboard = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={exportToCSV}
+            className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-colors shadow-xs"
+            title="Export Bookings to CSV"
+          >
+            <Download className="w-4 h-4 text-emerald-600" />
+            <span className="hidden sm:inline">Export</span> CSV
+          </button>
           <Link
             to="/admin/services"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-colors shadow-xs"
           >
             <FolderKanban className="w-4 h-4 text-purple-600" />
-            Manage Categories
+            <span className="hidden sm:inline">Manage</span> Categories
           </Link>
           <button
-            onClick={fetchData}
+            onClick={() => fetchData()}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs sm:text-sm font-semibold transition-colors shadow-xs"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -257,6 +305,57 @@ const AdminDashboard = () => {
         </div>
 
       </div>
+
+      {/* Daily Booking Graph (Optional feature from specification) */}
+      {metrics.dailyTrends && metrics.dailyTrends.length > 0 && (
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-purple-700" />
+              <h3 className="font-extrabold text-slate-900 text-base">
+                Daily Booking Trends (Past 7 Days)
+              </h3>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">Workshop Traffic Volume</span>
+          </div>
+
+          <div className="grid grid-cols-7 gap-2 sm:gap-4 items-end pt-4 pb-2">
+            {metrics.dailyTrends.map((day, idx) => {
+              const maxCount = Math.max(...metrics.dailyTrends.map(d => d.count), 4);
+              const heightPercent = Math.max(14, Math.round((day.count / maxCount) * 100));
+              const isToday = idx === metrics.dailyTrends.length - 1;
+
+              return (
+                <div key={day.date} className="flex flex-col items-center gap-2">
+                  <span className="text-xs font-bold text-slate-700">
+                    {day.count}
+                  </span>
+                  <div className="w-full bg-slate-100 rounded-xl h-24 flex items-end p-1">
+                    <div
+                      style={{ height: `${heightPercent}%` }}
+                      className={`w-full rounded-lg transition-all duration-500 ${
+                        isToday
+                          ? 'bg-gradient-to-t from-purple-700 to-fuchsia-600 shadow-md shadow-purple-500/30'
+                          : day.count > 0
+                          ? 'bg-purple-400 hover:bg-purple-500'
+                          : 'bg-slate-200'
+                      }`}
+                    ></div>
+                  </div>
+                  <div className="text-center">
+                    <span className={`text-[11px] font-bold block ${isToday ? 'text-purple-700' : 'text-slate-600'}`}>
+                      {day.dayName}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block -mt-0.5">
+                      {day.date.slice(5)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Filter & Search Bar */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">

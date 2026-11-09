@@ -8,10 +8,13 @@ import {
   Clock, 
   Tag, 
   Wrench, 
-  AlertCircle,
-  FileText,
-  DollarSign,
-  ArrowLeft
+  AlertCircle, 
+  FileText, 
+  DollarSign, 
+  ArrowLeft,
+  Edit3,
+  X,
+  Check
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -25,6 +28,10 @@ const ServiceCategoriesPage = () => {
   const [priceEstimate, setPriceEstimate] = useState('');
   const [durationEstimate, setDurationEstimate] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Edit State
+  const [editingService, setEditingService] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchServices = async () => {
     setLoading(true);
@@ -73,6 +80,36 @@ const ServiceCategoriesPage = () => {
       toast.error(error.response?.data?.message || 'Failed to add service category');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUpdateService = async (e) => {
+    e.preventDefault();
+    if (!editingService.name.trim() || !editingService.description.trim()) {
+      toast.error('Service name and description are required');
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      const res = await api.put(`/services/${editingService._id}`, {
+        name: editingService.name.trim(),
+        description: editingService.description.trim(),
+        priceEstimate: editingService.priceEstimate.trim() || 'Contact for quote',
+        durationEstimate: editingService.durationEstimate.trim() || '1-2 hours'
+      });
+
+      if (res.data.success) {
+        toast.success(`Service "${editingService.name}" updated!`);
+        setServices((prev) =>
+          prev.map((s) => (s._id === editingService._id ? res.data.service : s))
+        );
+        setEditingService(null);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update service');
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -266,7 +303,14 @@ const ServiceCategoriesPage = () => {
                       </div>
                     </div>
 
-                    <div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditingService({ ...srv })}
+                        className="p-2 rounded-xl text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                        title="Edit Category"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleDeleteService(srv._id, srv.name)}
                         className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
@@ -283,6 +327,98 @@ const ServiceCategoriesPage = () => {
         </div>
 
       </div>
+
+      {/* Edit Category Modal */}
+      {editingService && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-5 animate-scaleIn">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-purple-600" />
+                <h3 className="font-extrabold text-slate-900 text-lg">
+                  Edit Service Category
+                </h3>
+              </div>
+              <button
+                onClick={() => setEditingService(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateService} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Service Name *
+                </label>
+                <input
+                  type="text"
+                  value={editingService.name}
+                  onChange={(e) => setEditingService({ ...editingService, name: e.target.value })}
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-600 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Description *
+                </label>
+                <textarea
+                  rows="3"
+                  value={editingService.description}
+                  onChange={(e) => setEditingService({ ...editingService, description: e.target.value })}
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-600 outline-none"
+                ></textarea>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Est. Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={editingService.durationEstimate}
+                    onChange={(e) => setEditingService({ ...editingService, durationEstimate: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-600 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Est. Price (LKR)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingService.priceEstimate}
+                    onChange={(e) => setEditingService({ ...editingService, priceEstimate: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-600 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingService(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="flex-1 py-2.5 rounded-xl bg-purple-700 text-white text-xs font-bold hover:bg-purple-800 disabled:opacity-50 shadow-md shadow-purple-600/20"
+                >
+                  {editLoading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

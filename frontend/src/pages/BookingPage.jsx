@@ -14,7 +14,8 @@ import {
   Copy, 
   ArrowRight,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Printer
 } from 'lucide-react';
 
 const timeSlots = [
@@ -97,6 +98,13 @@ const BookingPage = () => {
       toast.error('Please enter your phone number');
       return;
     }
+    // Validate phone number format (e.g. 0771234567 or +94771234567)
+    const cleanPhone = formData.phone.replace(/[\s-]/g, '');
+    const phoneRegex = /^(\+94|0)?[0-9]{9,10}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      toast.error('Please enter a valid phone number (e.g. 0771234567 or +94771234567)');
+      return;
+    }
     if (!formData.vehicleNumber.trim()) {
       toast.error('Please enter your vehicle registration number');
       return;
@@ -107,6 +115,12 @@ const BookingPage = () => {
     }
     if (!formData.date) {
       toast.error('Please select an appointment date');
+      return;
+    }
+    // Sunday check (closed for maintenance)
+    const selectedDateObj = new Date(formData.date + 'T00:00:00');
+    if (selectedDateObj.getDay() === 0) {
+      toast.error('Our service workshop is closed on Sundays for maintenance. Please select another date.');
       return;
     }
     if (!formData.time) {
@@ -231,13 +245,20 @@ const BookingPage = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <button
               onClick={() => navigate(`/track?query=${encodeURIComponent(confirmedBooking.vehicleNumber)}`)}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-white bg-purple-700 hover:bg-purple-800 shadow-md shadow-purple-700/20 transition-all"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-white bg-purple-700 hover:bg-purple-800 shadow-md shadow-purple-700/20 transition-all text-sm"
             >
               Track Live Status
               <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all text-sm"
+            >
+              <Printer className="w-4 h-4 text-purple-600" />
+              Print Receipt
             </button>
             <button
               onClick={() => {
@@ -252,7 +273,7 @@ const BookingPage = () => {
                   notes: ''
                 });
               }}
-              className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all text-sm"
             >
               Book Another Service
             </button>

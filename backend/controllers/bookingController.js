@@ -142,11 +142,12 @@ const trackBookings = async (req, res) => {
     if (isObjectId) {
       filter = { _id: trimmedQuery };
     } else {
-      const regex = new RegExp(`^${trimmedQuery}$`, 'i');
+      // Flexible matching for vehicle number (e.g. "CAB-4521" or "WP CAB-4521") or phone
+      const searchRegex = new RegExp(trimmedQuery, 'i');
       filter = {
         $or: [
-          { vehicleNumber: regex },
-          { phone: trimmedQuery }
+          { vehicleNumber: searchRegex },
+          { phone: searchRegex }
         ]
       };
     }
@@ -254,6 +255,22 @@ const getMetricsSummary = async (req, res) => {
     const todayStr = new Date().toISOString().split('T')[0];
     const todayBookingsCount = await Booking.countDocuments({ date: todayStr });
 
+    // Generate 7-day daily booking trends for the dashboard graph
+    const dailyTrends = [];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayName = dayNames[d.getDay()];
+      const count = await Booking.countDocuments({ date: dateStr });
+      dailyTrends.push({
+        date: dateStr,
+        dayName,
+        count
+      });
+    }
+
     // Group by status
     return res.status(200).json({
       success: true,
@@ -263,7 +280,8 @@ const getMetricsSummary = async (req, res) => {
         approved: approvedCount,
         completed: completedCount,
         rejected: rejectedCount,
-        today: todayBookingsCount
+        today: todayBookingsCount,
+        dailyTrends
       }
     });
   } catch (error) {

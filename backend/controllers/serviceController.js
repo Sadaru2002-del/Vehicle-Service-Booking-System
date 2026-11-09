@@ -68,6 +68,43 @@ const createService = async (req, res) => {
   }
 };
 
+// @desc    Update service category
+// @route   PUT /api/services/:id
+// @access  Protected (Admin)
+const updateService = async (req, res) => {
+  try {
+    const { name, description, priceEstimate, durationEstimate } = req.body;
+    const service = await ServiceCategory.findById(req.params.id);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service category not found'
+      });
+    }
+
+    if (name) service.name = name.trim();
+    if (description) service.description = description.trim();
+    if (priceEstimate) service.priceEstimate = priceEstimate.trim();
+    if (durationEstimate) service.durationEstimate = durationEstimate.trim();
+
+    await service.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Service category updated successfully',
+      service
+    });
+  } catch (error) {
+    console.error('Update service error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update service category',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Delete service category
 // @route   DELETE /api/services/:id
 // @access  Protected (Admin)
@@ -101,6 +138,7 @@ const deleteService = async (req, res) => {
 module.exports = {
   getAllServices,
   createService,
+  updateService,
   deleteService
 };
 
