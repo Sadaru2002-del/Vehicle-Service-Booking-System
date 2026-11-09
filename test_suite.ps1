@@ -163,3 +163,4 @@ $r13 = Run-Test "13. Admin Cleans Up Test Booking" {
 Write-Host "`n----------------------------------------------------------" -ForegroundColor Cyan
 Write-Host " TEST RESULTS: $passCount / $totalTests PASSED " -ForegroundColor $(if ($passCount -eq $totalTests) { "Green" } else { "Yellow" })
 Write-Host "----------------------------------------------------------" -ForegroundColor Cyan
+

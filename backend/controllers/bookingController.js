@@ -1,17 +1,26 @@
 const Booking = require('../models/Booking');
+const ServiceCategory = require('../models/ServiceCategory');
 
 // @desc    Create a new booking (Customer)
 // @route   POST /api/bookings
 // @access  Public
 const createBooking = async (req, res) => {
   try {
-    const { customerName, phone, vehicleNumber, serviceType, date, time, notes } = req.body;
+    const { customerName, phone, vehicleNumber, serviceType, date, time, notes, priceEstimate } = req.body;
 
     if (!customerName || !phone || !vehicleNumber || !serviceType || !date || !time) {
       return res.status(400).json({
         success: false,
         message: 'Please fill in all required booking fields'
       });
+    }
+
+    let finalPrice = priceEstimate;
+    if (!finalPrice) {
+      const matchedService = await ServiceCategory.findOne({ name: serviceType.trim() });
+      if (matchedService && matchedService.priceEstimate) {
+        finalPrice = matchedService.priceEstimate;
+      }
     }
 
     const booking = await Booking.create({
@@ -22,6 +31,7 @@ const createBooking = async (req, res) => {
       date,
       time,
       notes: notes ? notes.trim() : '',
+      priceEstimate: finalPrice || 'Contact for quote',
       status: 'Pending'
     });
 

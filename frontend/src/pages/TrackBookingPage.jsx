@@ -256,10 +256,16 @@ const TrackBookingPage = () => {
                 </div>
 
                 {/* Details Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 text-sm bg-slate-50 p-4 rounded-2xl border border-slate-100">
                   <div>
                     <span className="text-xs text-slate-400 font-semibold block">Service Type</span>
                     <span className="font-bold text-slate-800">{booking.serviceType}</span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-400 font-semibold block">Service Fee</span>
+                    <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 block w-fit">
+                      {booking.priceEstimate || 'Contact for quote'}
+                    </span>
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 font-semibold block">Scheduled Date</span>

@@ -190,17 +190,17 @@ const ServiceCategoriesPage = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  Est. Price
+                  Est. Price (LKR) *
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <DollarSign className="w-4 h-4" />
+                    <Tag className="w-4 h-4" />
                   </div>
                   <input
                     type="text"
                     value={priceEstimate}
                     onChange={(e) => setPriceEstimate(e.target.value)}
-                    placeholder="e.g. $50 - $80"
+                    placeholder="e.g. LKR 14,500"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-slate-800 text-sm outline-none transition-all"
                   />
                 </div>
@@ -260,7 +260,9 @@ const ServiceCategoriesPage = () => {
                       <div className="flex items-center gap-3 pt-1 text-[11px] text-slate-400">
                         <span>Est: <strong className="text-slate-600">{srv.durationEstimate}</strong></span>
                         <span>•</span>
-                        <span>Price: <strong className="text-purple-700">{srv.priceEstimate}</strong></span>
+                        <span className="font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {srv.priceEstimate}
+                        </span>
                       </div>
                     </div>
 

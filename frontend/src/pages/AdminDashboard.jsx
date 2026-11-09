@@ -384,9 +384,12 @@ const AdminDashboard = () => {
                       </div>
                     </td>
 
-                    {/* Service */}
+                    {/* Service & Price */}
                     <td className="py-3.5 px-4 text-slate-700 font-medium">
-                      {b.serviceType}
+                      <div className="font-semibold text-slate-800">{b.serviceType}</div>
+                      <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mt-0.5">
+                        {b.priceEstimate || 'Contact for quote'}
+                      </span>
                     </td>
 
                     {/* Date & Time */}
@@ -505,6 +508,12 @@ const AdminDashboard = () => {
                 <div>
                   <span className="text-xs text-slate-400 font-semibold block">Service Type</span>
                   <span className="font-bold text-slate-800">{selectedBooking.serviceType}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-slate-400 font-semibold block">Service Fee (LKR)</span>
+                  <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">
+                    {selectedBooking.priceEstimate || 'Contact for quote'}
+                  </span>
                 </div>
                 <div>
                   <span className="text-xs text-slate-400 font-semibold block">Customer Name</span>

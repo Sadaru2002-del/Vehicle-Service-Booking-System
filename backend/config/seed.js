@@ -2,6 +2,45 @@ const User = require('../models/User');
 const ServiceCategory = require('../models/ServiceCategory');
 const Booking = require('../models/Booking');
 
+const defaultServices = [
+  {
+    name: 'Oil & Filter Change',
+    description: 'High-grade synthetic engine oil replacement, genuine oil filter change, and complete fluid level inspection.',
+    priceEstimate: 'LKR 14,500',
+    durationEstimate: '45 mins'
+  },
+  {
+    name: 'Full Vehicle Service',
+    description: 'Comprehensive 50-point inspection including engine health, brakes, suspension, electrical system, and all essential fluids.',
+    priceEstimate: 'LKR 45,000',
+    durationEstimate: '3-4 hours'
+  },
+  {
+    name: 'Brake Inspection & Repair',
+    description: 'Front and rear brake pad check, rotor resurfacing/replacement, brake fluid flush, and ABS safety test.',
+    priceEstimate: 'LKR 12,000',
+    durationEstimate: '1.5 hours'
+  },
+  {
+    name: 'Wheel Alignment & Balancing',
+    description: 'Computerized 3D laser wheel alignment, tire pressure balancing, and rotation to prevent uneven tire wear.',
+    priceEstimate: 'LKR 5,500',
+    durationEstimate: '1 hour'
+  },
+  {
+    name: 'Engine Diagnostics & Tune-up',
+    description: 'OBD-II electronic computer diagnostic scan, spark plug test, fuel system optimization, and engine tuning.',
+    priceEstimate: 'LKR 11,000',
+    durationEstimate: '1.5 hours'
+  },
+  {
+    name: 'Air Conditioning System Service',
+    description: 'A/C refrigerant (gas) refill, leak detection test, cabin pollen filter cleaning/replacement, and cooling performance check.',
+    priceEstimate: 'LKR 16,500',
+    durationEstimate: '1 hour'
+  }
+];
+
 const seedData = async () => {
   try {
     // 1. Seed Admin User
@@ -17,53 +56,51 @@ const seedData = async () => {
       console.log(`[Seed]: Default Admin created (Username: ${adminUsername}, Password: ${adminPassword})`);
     }
 
-    // 2. Seed Service Categories if empty
+    // 2. Ensure Service Categories exist and have LKR prices
     const serviceCount = await ServiceCategory.countDocuments();
     if (serviceCount === 0) {
-      const defaultServices = [
-        {
-          name: 'Oil & Filter Change',
-          description: 'High-grade synthetic oil replacement, oil filter change, and complete fluid level check.',
-          priceEstimate: '$60 - $90',
-          durationEstimate: '45 mins'
-        },
-        {
-          name: 'Full Vehicle Service',
-          description: 'Comprehensive 50-point inspection including engine health, brakes, suspension, electrical, and fluids.',
-          priceEstimate: '$180 - $250',
-          durationEstimate: '3-4 hours'
-        },
-        {
-          name: 'Brake Inspection & Repair',
-          description: 'Front and rear brake pad check, rotor resurfacing/replacement, brake fluid bleeding and safety test.',
-          priceEstimate: '$90 - $140',
-          durationEstimate: '1.5 hours'
-        },
-        {
-          name: 'Wheel Alignment & Balancing',
-          description: 'Computerized laser wheel alignment, tire pressure balancing, and rotation to prevent uneven tire wear.',
-          priceEstimate: '$50 - $80',
-          durationEstimate: '1 hour'
-        },
-        {
-          name: 'Engine Diagnostics & Tune-up',
-          description: 'OBD-II computer diagnostics, spark plug inspection, sensor verification, and performance optimization.',
-          priceEstimate: '$80 - $130',
-          durationEstimate: '1.5 hours'
-        },
-        {
-          name: 'Air Conditioning System Service',
-          description: 'A/C refrigerant recharge, leak detection test, cabin filter replacement, and cooling efficiency test.',
-          priceEstimate: '$70 - $110',
-          durationEstimate: '1 hour'
-        }
-      ];
-
       await ServiceCategory.insertMany(defaultServices);
-      console.log(`[Seed]: Default service categories seeded (${defaultServices.length} categories)`);
+      console.log(`[Seed]: Default service categories seeded with LKR prices (${defaultServices.length} categories)`);
+    } else {
+      // Update any existing categories to have LKR prices if they had old prices
+      for (const service of defaultServices) {
+        await ServiceCategory.findOneAndUpdate(
+          { name: service.name },
+          { 
+            priceEstimate: service.priceEstimate,
+            durationEstimate: service.durationEstimate,
+            description: service.description
+          },
+          { upsert: false }
+        );
+      }
+      console.log(`[Seed]: Service categories verified & synced with LKR pricing`);
     }
 
-    // 3. Seed sample bookings if empty
+    // 3. Update existing bookings with missing or non-LKR prices
+    const servicePriceMap = {
+      'Oil & Filter Change': 'LKR 14,500',
+      'Full Vehicle Service': 'LKR 45,000',
+      'Brake Inspection & Repair': 'LKR 12,000',
+      'Wheel Alignment & Balancing': 'LKR 5,500',
+      'Engine Diagnostics & Tune-up': 'LKR 11,000',
+      'Air Conditioning System Service': 'LKR 16,500'
+    };
+
+    const bookingsWithoutLkr = await Booking.find({
+      $or: [
+        { priceEstimate: { $exists: false } },
+        { priceEstimate: '' },
+        { priceEstimate: { $regex: '^\\$' } }
+      ]
+    });
+
+    for (const b of bookingsWithoutLkr) {
+      const lkrPrice = servicePriceMap[b.serviceType] || 'LKR 12,000';
+      await Booking.findByIdAndUpdate(b._id, { priceEstimate: lkrPrice });
+    }
+
+    // 4. Seed sample bookings if empty
     const bookingCount = await Booking.countDocuments();
     if (bookingCount === 0) {
       const today = new Date().toISOString().split('T')[0];
@@ -75,6 +112,7 @@ const seedData = async () => {
           phone: '0771234567',
           vehicleNumber: 'WP CAB-4521',
           serviceType: 'Oil & Filter Change',
+          priceEstimate: 'LKR 14,500',
           date: today,
           time: '09:00 AM',
           notes: 'Prefer 5W-30 synthetic oil please.',
@@ -85,6 +123,7 @@ const seedData = async () => {
           phone: '0719876543',
           vehicleNumber: 'CP CAA-8812',
           serviceType: 'Full Vehicle Service',
+          priceEstimate: 'LKR 45,000',
           date: today,
           time: '11:00 AM',
           notes: 'Check noise near front left wheel.',
@@ -95,6 +134,7 @@ const seedData = async () => {
           phone: '0765554321',
           vehicleNumber: 'SP KU-1980',
           serviceType: 'Brake Inspection & Repair',
+          priceEstimate: 'LKR 12,000',
           date: tomorrow,
           time: '02:00 PM',
           notes: 'Brake squeaking sound during high speed braking.',
@@ -105,6 +145,7 @@ const seedData = async () => {
           phone: '0783332211',
           vehicleNumber: 'WP CAR-9023',
           serviceType: 'Wheel Alignment & Balancing',
+          priceEstimate: 'LKR 5,500',
           date: today,
           time: '04:00 PM',
           notes: 'Steering pulls slightly to the left.',
@@ -113,7 +154,7 @@ const seedData = async () => {
       ];
 
       await Booking.insertMany(sampleBookings);
-      console.log(`[Seed]: Sample bookings seeded (${sampleBookings.length} bookings)`);
+      console.log(`[Seed]: Sample bookings seeded with LKR prices (${sampleBookings.length} bookings)`);
     }
   } catch (error) {
     console.error('[Seed Error]:', error.message);
@@ -121,4 +162,3 @@ const seedData = async () => {
 };
 
 module.exports = seedData;
-

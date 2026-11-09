@@ -116,7 +116,12 @@ const BookingPage = () => {
 
     setSubmitting(true);
     try {
-      const res = await api.post('/bookings', formData);
+      const selectedService = services.find(s => s.name === formData.serviceType);
+      const payload = {
+        ...formData,
+        priceEstimate: selectedService?.priceEstimate || ''
+      };
+      const res = await api.post('/bookings', payload);
       if (res.data.success) {
         toast.success('Service booking submitted successfully!');
         setConfirmedBooking(res.data.booking);
@@ -201,6 +206,12 @@ const BookingPage = () => {
               <div>
                 <span className="text-slate-500">Service Category:</span>
                 <p className="font-semibold text-slate-800">{confirmedBooking.serviceType}</p>
+              </div>
+              <div>
+                <span className="text-slate-500">Estimated Service Fee:</span>
+                <p className="font-black text-emerald-700 text-base">
+                  {confirmedBooking.priceEstimate || 'Contact for quote'}
+                </p>
               </div>
               <div>
                 <span className="text-slate-500">Appointment Date:</span>
@@ -354,19 +365,40 @@ const BookingPage = () => {
                         onChange={handleChange}
                         required
                         disabled={loadingServices}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-slate-800 text-sm outline-none transition-all bg-white"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-slate-800 text-sm outline-none transition-all bg-white font-medium"
                       >
                         {loadingServices ? (
                           <option>Loading services...</option>
                         ) : (
                           services.map((srv) => (
                             <option key={srv._id} value={srv.name}>
-                              {srv.name} ({srv.durationEstimate || '1-2 hrs'})
+                              {srv.name} — {srv.priceEstimate} ({srv.durationEstimate || '1-2 hrs'})
                             </option>
                           ))
                         )}
                       </select>
                     </div>
+
+                    {/* Selected Service Detail & LKR Pricing Card */}
+                    {services.find(s => s.name === formData.serviceType) && (
+                      <div className="mt-3 p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700">Service Fee:</span>
+                            <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-black text-sm border border-emerald-300">
+                              {services.find(s => s.name === formData.serviceType)?.priceEstimate}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                            {services.find(s => s.name === formData.serviceType)?.description}
+                          </p>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-1.5 text-xs text-slate-700 font-semibold bg-white px-3 py-1.5 rounded-xl border border-slate-200">
+                          <Clock className="w-3.5 h-3.5 text-purple-600" />
+                          <span>Est: {services.find(s => s.name === formData.serviceType)?.durationEstimate}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

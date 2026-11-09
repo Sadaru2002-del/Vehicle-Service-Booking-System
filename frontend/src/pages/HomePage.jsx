@@ -217,21 +217,27 @@ const HomePage = () => {
                   <div className="w-10 h-10 rounded-lg bg-purple-50 group-hover:bg-purple-600 text-purple-700 group-hover:text-white flex items-center justify-center transition-colors mb-4">
                     <Wrench className="w-5 h-5" />
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 mb-2">
-                    {srv.name}
-                  </h3>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-bold text-lg text-slate-900">
+                      {srv.name}
+                    </h3>
+                  </div>
+                  <div className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-extrabold text-sm mb-3 border border-emerald-200/60">
+                    <span>{srv.priceEstimate || 'Contact for quote'}</span>
+                  </div>
                   <p className="text-sm text-slate-600 line-clamp-3 mb-4 leading-relaxed">
                     {srv.description}
                   </p>
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                  <span className="font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md">
-                    Est: {srv.durationEstimate || '1-2 hrs'}
+                  <span className="font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {srv.durationEstimate || '1-2 hrs'}
                   </span>
                   <Link
                     to={`/book?service=${encodeURIComponent(srv.name)}`}
-                    className="font-bold text-slate-700 hover:text-purple-700 inline-flex items-center gap-1"
+                    className="font-bold text-white bg-purple-700 hover:bg-purple-800 px-3 py-1.5 rounded-lg inline-flex items-center gap-1 transition-colors"
                   >
                     Select & Book <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
